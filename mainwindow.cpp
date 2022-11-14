@@ -3,8 +3,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
      : QWidget(parent)
-    , ui(new Ui::MainWindow)
-{
+    {
     this->setGeometry(100, 100, 1000, 600);
 
        btnChangeDirectory = new QPushButton("Change Directory");
@@ -47,6 +46,8 @@ MainWindow::MainWindow(QWidget *parent)
        tableFileView->setModel(fileModel);
        tableFileView->setRootIndex(pathIndex);
 
+       tableFileView->setSelectionMode(QAbstractItemView::SingleSelection);
+
        chartView = new QChartView();
        chartView->setRenderHint(QPainter::Antialiasing);
 
@@ -55,9 +56,52 @@ MainWindow::MainWindow(QWidget *parent)
        chartSplitter->addWidget(chartView);
        fileExplorerLayout->addWidget(btnChangeDirectory, 0, Qt::AlignBottom);
        fileExplorerLayout->addWidget(pathLabel, 0, Qt::AlignBottom);
+
+       connect(btnChangeDirectory, SIGNAL(clicked(bool)), this, SLOT(changeDirectory()));
+           connect(
+                       tableFileView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
+                       this, SLOT(fileSelection(const QItemSelection &, const QItemSelection &))
+                       );
+       }
+
+       void MainWindow::changeDirectory() {
+           QFileDialog dialogWindow(this);
+           dialogWindow.setFileMode(QFileDialog::Directory);
+           if (dialogWindow.exec()) {
+               directoryPath = dialogWindow.selectedFiles().first();
+               pathLabel->setText(directoryPath);
+           }
+           tableFileView->setRootIndex(fileModel->setRootPath(directoryPath));
+       }
+
+       void MainWindow::fileSelection(const QItemSelection &selected, const QItemSelection &deselected) {
+           Q_UNUSED(deselected);
+
+           QModelIndexList indexes = selected.indexes();
+           if (indexes.count() < 1) {
+               exceptionCall("Error", "Select item");
+               return;
+           }
+           QString filePath = fileModel->filePath(indexes.first());
+           if (filePath.endsWith(".json")) {
+               auto* json = new JsonDataStructure();
+               json->getData(filePath);
+           }
+           else if (filePath.endsWith(".sqlite")) {
+               auto* sql = new SqlDataStructure();
+               sql->getData(filePath);
+           }
+           else {
+               exceptionCall("Wrong file format", "Select .json or .sqlite file");
+               return;
+           }
+       }
+
+       void MainWindow::exceptionCall(QString title, QString message) {
+           QMessageBox *messageBox = new QMessageBox();
+           messageBox->setWindowTitle(title);
+           messageBox->setText(message);
+           messageBox->exec();
    }
 
-   MainWindow::~MainWindow()
-   {
-       delete ui;
-   }
+   MainWindow::~MainWindow() {}

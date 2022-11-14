@@ -1,6 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include "structure.h"
 #include <QMainWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -16,20 +16,18 @@
 #include <QMessageBox>
 #include <QPdfWriter>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
 class MainWindow : public QWidget
 {
     Q_OBJECT
+
+private slots:
+    void changeDirectory();
+    void fileSelection(const QItemSelection &selected, const QItemSelection &deselected);
 
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 private:
-    Ui::MainWindow *ui;
-
     QString directoryPath;
 
     QFileSystemModel* fileModel;
@@ -53,5 +51,7 @@ private:
 
     QSplitter* fileSplitter;
     QSplitter* chartSplitter;
+
+    void exceptionCall(QString title, QString message);
 };
 #endif // MAINWINDOW_H
