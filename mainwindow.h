@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "structure.h"
+#include "Diagram.h"
 #include <QMainWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>

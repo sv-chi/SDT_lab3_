@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "IOC.h"
 
 MainWindow::MainWindow(QWidget *parent)
      : QWidget(parent)
@@ -58,9 +59,9 @@ MainWindow::MainWindow(QWidget *parent)
        fileExplorerLayout->addWidget(pathLabel, 0, Qt::AlignBottom);
 
        connect(btnChangeDirectory, SIGNAL(clicked(bool)), this, SLOT(changeDirectory()));
-           connect(
-                       tableFileView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
-                       this, SLOT(fileSelection(const QItemSelection &, const QItemSelection &))
+       connect(
+                   tableFileView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)),
+                                   this, SLOT(fileSelection(const QItemSelection, const QItemSelection))
                        );
        }
 
@@ -84,17 +85,21 @@ MainWindow::MainWindow(QWidget *parent)
            }
            QString filePath = fileModel->filePath(indexes.first());
            if (filePath.endsWith(".json")) {
-               auto* json = new JsonDataStructure();
-               json->getData(filePath);
+           iocContainer.RegisterInstance<IDataStructure, JsonDataStructure>();
            }
            else if (filePath.endsWith(".sqlite")) {
-               auto* sql = new SqlDataStructure();
-               sql->getData(filePath);
+           iocContainer.RegisterInstance<IDataStructure, SqlDataStructure>();
            }
            else {
                exceptionCall("Wrong file format", "Select .json or .sqlite file");
                return;
            }
+           iocContainer.RegisterInstance<IChart, BarChart>();
+            auto chart = iocContainer.GetObject<IChart>();
+            auto dataStructure = iocContainer.GetObject<IDataStructure>();
+            QList<Data> items = dataStructure->getData(filePath);
+            chart->recreateChart(items);
+            chartView->setChart(chart->getChart());
        }
 
        void MainWindow::exceptionCall(QString title, QString message) {
