@@ -1,6 +1,5 @@
 #ifndef DIAGRAM_H
 #define DIAGRAM_H
-
 #include <QtCharts/QChart>
 #include <QtCharts/QBarSeries>
 #include <QtCharts/QBarSet>
@@ -9,26 +8,24 @@
 #include <structure.h>
 
 class IChart {
+    QChart* chart = new QChart();
 public:
-    virtual QChart* getChart() = 0;
-    virtual void recreateChart(QList<Data>) = 0;
+    QChart* getChart() {return chart;}
+    virtual void recreateChart(QList<Data>, bool) = 0;
     virtual ~IChart() = default;
+    void clearChart() {chart->removeAllSeries();}
 };
 
 class BarChart: public IChart {
-    QChart* chart = new QChart();
 public:
-    QChart* getChart() {return chart;}
-    void recreateChart(QList<Data>);
-    ~BarChart() {delete chart;}
+    void recreateChart(QList<Data>, bool);
+    ~BarChart() = default;
 };
 
 class PieChart: public IChart {
-    QChart* chart = new QChart();
 public:
-    QChart* getChart() {return chart;}
-    void recreateChart(QList<Data>);
-    ~PieChart() {delete chart;}
+    void recreateChart(QList<Data>, bool);
+    ~PieChart() = default;
 };
 
 #endif // DIAGRAM_H

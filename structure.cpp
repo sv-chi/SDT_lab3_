@@ -11,7 +11,6 @@ QList<Data> JsonDataStructure::getData(QString filePath) {
         file.close();
         QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
         QJsonObject jsonObject = doc.object();
-
         QStringList keys (jsonObject.keys());
         int i = 0;
         QListIterator<QString> iterator(keys);
@@ -20,20 +19,31 @@ QList<Data> JsonDataStructure::getData(QString filePath) {
             double value = jsonObject.value(key).toDouble();
             Data temp{key, value};
             result.push_back(temp);
+            i++;
         }
-    }}
+    }
+    else {
+        qDebug() << "Json was not opened";
+    }
+    return result;
+}
 
 QList<Data> SqlDataStructure::getData(QString filePath) {
     QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE");
     dbase.setDatabaseName(filePath);
     QList<Data> result;
     if (dbase.open()) {
-        QSqlQuery query ("SELECT * FROM " + dbase.tables().takeFirst() + " LIMIT 0,10");
+        QSqlQuery query ("SELECT * FROM " + dbase.tables().takeFirst());
         int i = 0;
-               while (query.next() && i < 10) {
-                   i++;
-                   Data temp{query.value(0).toString(), query.value(1).toDouble()};
-                   result.push_back(temp);   }
+        while (query.next() && i < 10) {
+            i++;
+            Data temp{query.value(0).toString(), query.value(1).toDouble()};
+            result.push_back(temp);
+        }
     }
+    else {
+        qDebug() << " Sqlite was not opened";
+    }
+    return result;
 }
 
