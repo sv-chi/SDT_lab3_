@@ -19,45 +19,45 @@ class MainWindow : public QWidget
 {
     Q_OBJECT
 
-private slots:
-    void changeDirectory();
-    void fileSelection(const QItemSelection &selected, const QItemSelection &deselected);
-    void changeChartType();
-    void printChart();
-    void colorSwap();
+private slots://слоты
+    void changeDirectory();//смена директории
+    void fileSelection(const QItemSelection &selected, const QItemSelection &deselected);//изменение файла выбранного
+    void changeChartType();//изменение типа графика
+    void printChart();//печать диаграммы
+    void colorSwap();//изменение цвета
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private:
-    QString directoryPath;
-    QString filePath;
+    QString directoryPath;//строка хранит директорию
+    QString filePath;//строкахранит путь
 
     QFileSystemModel* fileModel;
     QTableView* tableFileView;
 
     QChartView* chartView;
 
-    QLabel* pathLabel;
+    QLabel* pathLabel;//метка, показывающая путь
 
-    QPushButton* btnPrintChart;
-    QPushButton* btnChangeDirectory;
+    QPushButton* btnPrintChart;//кнопка печати
+    QPushButton* btnChangeDirectory;//кнопка изменения директории в таблице
 
-    QCheckBox* chkbxBlackWhiteChart;
+    QCheckBox* chkbxBlackWhiteChart;//изменение цвета
 
-    QComboBox* comboboxChartType;
+    QComboBox* comboboxChartType;//изменение типа
 
-    QHBoxLayout* wrapperLayout;
-    QVBoxLayout* fileExplorerLayout;
-    QVBoxLayout* chartLayout;
-    QHBoxLayout* chartWidgetLayout;
+    QHBoxLayout* wrapperLayout;//внешний вид экрана
+    QVBoxLayout* fileExplorerLayout;//верстка файлового проводника и его виджетов
+    QVBoxLayout* chartLayout;//разметка для диаграммы и виджетов
+    QHBoxLayout* chartWidgetLayout;//разметка виджетов диаграммы
 
     QSplitter* fileSplitter;
     QSplitter* chartSplitter;
 
-    bool isChartActive = false;
+    bool isChartActive = false;//переменная, которая хранит активность графика
 
-    void exceptionCall(QString title, QString message);
-    void drawChart();
+    void exceptionCall(QString title, QString message);//вызов месседжбокса
+    void drawChart();//рисовка графика
 };
 #endif // MAINWINDOW_H

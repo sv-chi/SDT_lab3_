@@ -6,22 +6,23 @@ MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
 {
     this->setGeometry(100, 100, 1000, 600);
+    //Создаём виджеты
     btnPrintChart = new QPushButton("Print Chart");
     btnChangeDirectory = new QPushButton("Change Directory");
     comboboxChartType = new QComboBox();
-    chkbxBlackWhiteChart = new QCheckBox("B/w Chart");
+    chkbxBlackWhiteChart = new QCheckBox("B/W");
+    //Добавляем виды графиков(круговая и столбчатая)
     comboboxChartType->addItem("Pie");
     comboboxChartType->addItem("Bar");
-
-    wrapperLayout = new QHBoxLayout(this);
-    fileExplorerLayout = new QVBoxLayout();
-    chartLayout = new QVBoxLayout();
-    chartWidgetLayout = new QHBoxLayout();
+    //определяем внешний вид
+    wrapperLayout = new QHBoxLayout(this);//расположение внешнее
+    fileExplorerLayout = new QVBoxLayout();//расположение для обзора
+    chartLayout = new QVBoxLayout();//расположение для графиков
+    chartWidgetLayout = new QHBoxLayout();//расположение для виджетов графика
 
     fileSplitter = new QSplitter();
     chartSplitter = new QSplitter();
-
-
+    //добавляем расположения
     wrapperLayout->addLayout(chartLayout);
     wrapperLayout->addLayout(fileExplorerLayout);
 
@@ -34,47 +35,46 @@ MainWindow::MainWindow(QWidget *parent)
     chartWidgetLayout->addWidget(comboboxChartType);
     chartWidgetLayout->addWidget(chkbxBlackWhiteChart);
 
-    // file view setup
-
+    // настройка просмотра файла
     fileModel = new QFileSystemModel(this);
     fileModel->setFilter(QDir::NoDotAndDotDot | QDir::AllEntries);
-
+    //устанавливаем текущую папку для просмотра
     directoryPath = QDir::currentPath();
     pathLabel = new QLabel();
+    //устанавливаем в метку директорию
     pathLabel->setText(directoryPath);
     QModelIndex pathIndex = fileModel->setRootPath(directoryPath);
 
     tableFileView = new QTableView();
     tableFileView->setModel(fileModel);
     tableFileView->setRootIndex(pathIndex);
-
+    //только для одного элемента выборка в таблице
     tableFileView->setSelectionMode(QAbstractItemView::SingleSelection);
-
+    //настройка просмотра диаграммы
     chartView = new QChartView();
     chartView->setRenderHint(QPainter::Antialiasing);
-
-
+    //расположение
     fileSplitter->addWidget(tableFileView);
     chartSplitter->addWidget(chartView);
     fileExplorerLayout->addWidget(btnChangeDirectory, 0, Qt::AlignBottom);
     fileExplorerLayout->addWidget(pathLabel, 0, Qt::AlignBottom);
-
-    connect(btnChangeDirectory, SIGNAL(clicked(bool)), this, SLOT(changeDirectory()));
+    //подключаем слоты
+    connect(btnChangeDirectory, SIGNAL(clicked(bool)), this, SLOT(changeDirectory()));//подключение изменения директории
 
     connect(
-                tableFileView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)),
+                tableFileView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)),//подключение изменений выбранного файла
                 this, SLOT(fileSelection(const QItemSelection, const QItemSelection))
                 );
-    connect(comboboxChartType, SIGNAL(currentIndexChanged(int)), this, SLOT(changeChartType()));
-    connect(chkbxBlackWhiteChart, SIGNAL(toggled(bool)), this, SLOT(colorSwap()));
-    connect(btnPrintChart, SIGNAL(clicked()), this, SLOT(printChart()));
+    connect(comboboxChartType, SIGNAL(currentIndexChanged(int)), this, SLOT(changeChartType()));//изменение типа графика
+    connect(chkbxBlackWhiteChart, SIGNAL(toggled(bool)), this, SLOT(colorSwap()));//изменение цвета графика
+    connect(btnPrintChart, SIGNAL(clicked()), this, SLOT(printChart()));//печать графика
 }
 
 void MainWindow::changeDirectory() {
-    QFileDialog dialogWindow(this);
-    dialogWindow.setFileMode(QFileDialog::Directory);
-    if (dialogWindow.exec()) {
-        directoryPath = dialogWindow.selectedFiles().first();
+    QFileDialog dialogWindow(this);//диалоговое окно
+    dialogWindow.setFileMode(QFileDialog::Directory);//вид папок
+    if (dialogWindow.exec()) {//если открылось, то
+        directoryPath = dialogWindow.selectedFiles().first();//обновляем путь
         pathLabel->setText(directoryPath);
     }
     tableFileView->setRootIndex(fileModel->setRootPath(directoryPath));
@@ -82,22 +82,22 @@ void MainWindow::changeDirectory() {
 
 void MainWindow::fileSelection(const QItemSelection &selected, const QItemSelection &deselected) {
     Q_UNUSED(deselected);
-
+//если индексов будет меньше одного, то вызываем ошибку
     QModelIndexList indexes = selected.indexes();
     if (indexes.count() < 1) {
         exceptionCall("Selection Error", "No items has been Selected");
         return;
     }
-    filePath = fileModel->filePath(indexes.first());
-    if (filePath.endsWith(".json")) {
+    filePath = fileModel->filePath(indexes.first());//получили выбранный путь до файла
+    if (filePath.endsWith(".json")) { //если .json
         iocContainer.RegisterInstance<IDataStructure, JsonDataStructure>();
     }
-    else if (filePath.endsWith(".sqlite")) {
+    else if (filePath.endsWith(".sqlite")) { //если .sqlite
         iocContainer.RegisterInstance<IDataStructure, SqlDataStructure>();
     }
-    else {
+    else {//если формат не такой, то у нас появится ошибка
         exceptionCall("Wrong file format", "Select .json or .sqlite file");
-        if (isChartActive) {
+        if (isChartActive) {//если график активный, то очищаем его
             auto chart = iocContainer.GetObject<IChart>();
             chart->getChart()->setTitle("");
             chart->clearChart();
@@ -105,7 +105,7 @@ void MainWindow::fileSelection(const QItemSelection &selected, const QItemSelect
         }
         return;
     }
-    if (comboboxChartType->currentText() == "Pie") {
+    if (comboboxChartType->currentText() == "Pie") {//проверка типа графика
         iocContainer.RegisterInstance<IChart, PieChart>();
         isChartActive = true;
     }
@@ -114,69 +114,69 @@ void MainWindow::fileSelection(const QItemSelection &selected, const QItemSelect
         isChartActive = true;
     }
     if (isChartActive) {
-        drawChart();
+        drawChart();//отрисовываем график
     }
 }
 
 void MainWindow::changeChartType() {
-    if (comboboxChartType->currentText() == "Pie") {
+    if (comboboxChartType->currentText() == "Pie") {//создаем круговой график
         iocContainer.RegisterInstance<IChart, PieChart>();
     }
-    else if (comboboxChartType->currentText() == "Bar") {
+    else if (comboboxChartType->currentText() == "Bar") {//создаем столбчатую диаграмму
         iocContainer.RegisterInstance<IChart, BarChart>();
     }
     if (isChartActive) {
-        drawChart();
+        drawChart();//отрисовываем
     }
 }
 
 void MainWindow::colorSwap() {
-    if (isChartActive) drawChart();
+    if (isChartActive) drawChart();//если график активный, то рисуем его
 }
 
 void MainWindow::printChart() {
-    if(isChartActive){
+    if(isChartActive){//если график активен, то можем печатать график
         QFileDialog *fileDialog = new QFileDialog(this);
-        fileDialog-> setWindowTitle (tr ("Сохранить в ..."));
-        fileDialog->setDirectory(".");
+        fileDialog-> setWindowTitle (tr ("Сохранить в ..."));//заголовок
+        fileDialog->setDirectory(".");//путь по умолчанию
         fileDialog->setAcceptMode(QFileDialog::AcceptSave);
-        fileDialog->setViewMode(QFileDialog::Detail);
+        fileDialog->setViewMode(QFileDialog::Detail);//устанавливаем режим просмотра
         QStringList fileNames;
         if(fileDialog->exec())
         {
             fileNames = fileDialog->selectedFiles();
         }
 
-        QPdfWriter pdfWriter(fileNames.first() + ".pdf");
+        QPdfWriter pdfWriter(fileNames.first() + ".pdf");//название
 
         pdfWriter.setCreator("User");
 
-        pdfWriter.setPageSize(QPageSize::A4);
+        pdfWriter.setPageSize(QPageSize::A4);//размер страницы
 
-        pdfWriter.setResolution (300);
-        QPainter painter(&pdfWriter);
+        pdfWriter.setResolution (300);//разрешение
+        QPainter painter(&pdfWriter);//добавление контента
 
-        chartView->render(&painter);
+        chartView->render(&painter);//рисуем
         painter.end();
     }
     else {
-        exceptionCall("Pdf error", "No chart to print");
+        exceptionCall("Pdf error", "No chart to print");//ошибка, если график не активен
     }
 }
 
 void MainWindow::drawChart() {
-    auto chart = iocContainer.GetObject<IChart>();
-    auto dataStructure = iocContainer.GetObject<IDataStructure>();
-    QList<Data> items = dataStructure->getData(filePath);
-    chart->recreateChart(items, chkbxBlackWhiteChart->isChecked());
-    chartView->setChart(chart->getChart());
+    auto chart = iocContainer.GetObject<IChart>();//используем ioc обращение к интерфейсам
+    auto dataStructure = iocContainer.GetObject<IDataStructure>();//используем ioc обращение к интерфейсам
+    QList<Data> items = dataStructure->getData(filePath);//получили данные
+    chart->recreateChart(items, chkbxBlackWhiteChart->isChecked());//рисуем
+    chartView->setChart(chart->getChart());//получаем представление графика
 }
 
 void MainWindow::exceptionCall(QString title, QString message) {
     QMessageBox *messageBox = new QMessageBox();
-    messageBox->setWindowTitle(title);
-    messageBox->setText(message);
-    messageBox->exec();
+    messageBox->setWindowTitle(title);//устанавливаем заголовок в месседж боксе
+    messageBox->setText(message);//устанавливаем сообщение
+    messageBox->exec();//открываем
 }
 
 MainWindow::~MainWindow()

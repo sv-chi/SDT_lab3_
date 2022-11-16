@@ -14,7 +14,7 @@ using namespace std;
 class IOCContainer
 
 {
-    static int s_typeId;
+    static int s_typeId;//id выделенного типа
 
 public:
 
@@ -25,7 +25,7 @@ public:
         static int typeId = s_typeId++;
         return typeId;
     }
-
+//фабрика по генерированию фабрик
     class FactoryBase
 
     {
@@ -36,7 +36,7 @@ public:
 
     };
 
-    map<int, shared_ptr<FactoryBase>> factories;
+    map<int, shared_ptr<FactoryBase>> factories;//коллекция фабрик
 
     template<typename T>
 
@@ -73,32 +73,31 @@ public:
         auto factory = std::static_pointer_cast<CFactory<T>>(factoryBase);
         return factory->GetObject();
     }
-
+//регистрируем
     template<typename TInterface, typename ...TS>
     void RegisterFunctor(std::function<std::shared_ptr<TInterface>(std::shared_ptr<TS> ...ts)> functor)
     {
         factories[GetTypeID<TInterface>()] = std::make_shared<CFactory<TInterface>>([=] {return functor(GetObject<TS>()...); });
     }
-
+//регистрация экземпляра объекта
     template<typename TInterface>
     void RegisterInstance(std::shared_ptr<TInterface> t)
     {
         factories[GetTypeID<TInterface>()] = std::make_shared<CFactory<TInterface>>([=] {return t; });
     }
-
+//работа с указателем на функцию
     template<typename TInterface, typename ...TS>
     void RegisterFunctor(std::shared_ptr<TInterface>(*functor)(std::shared_ptr<TS> ...ts))
     {
         RegisterFunctor(std::function<std::shared_ptr<TInterface>(std::shared_ptr<TS> ...ts)>(functor));
     }
-
-
+//получаем единственный экземпляр объекта
     static IOCContainer& IOCInstance()
         {
             static IOCContainer ioc_;
             return ioc_;
         }
-
+//вызываем необходимый конструктор
     template<typename TInterface, typename TConcrete, typename ...TArguments>
     void RegisterFactory()
     {
@@ -110,7 +109,7 @@ public:
         }));
 
     }
-
+//возращаем экземпляр объекта
     template<typename TInterface, typename TConcrete, typename ...TArguments>
     void RegisterInstance()
     {
